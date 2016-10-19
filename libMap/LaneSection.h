@@ -10,21 +10,24 @@
 
 namespace ts
 {
-	class CLaneSection
+	class CLaneSection : public IMonitorableObject
 	{
 	protected:
+		sf::Vector2f mStartPoint, mEndPoint;
+
 		float dotR { 3.f };
 		sf::CircleShape dot { dotR, 10 };
 
 		const float enlargeDelta { 3.0 };
 
-		CLaneSection ()
+		CLaneSection (const sf::Vector2f& end0 = {0.f, 0.f}, const sf::Vector2f& end1 = { 0.f, 0.f })
+			: mStartPoint (end0), mEndPoint (end1)
 		{
 			dot.setPosition ({ 100.f, 100.f });
 			dot.setFillColor (sf::Color::White);
 			dot.setOutlineColor (sf::Color::Black);
 			dot.setOutlineThickness (1.f);
-			dot.setOrigin (3.f, 3.f);
+			dot.setOrigin (dotR, dotR);
 		}
 
 	public:
@@ -34,13 +37,10 @@ namespace ts
 
 	class CStraightLaneSection : public CLaneSection, public sf::RectangleShape
 	{
-		sf::Vector2f startPoint, endPoint;
-
+	private:
 		float mWidth { carH };
 		
 		static float GetNormal (const sf::Vector2f& end0, const sf::Vector2f& end1);
-
-		void UpdateEndPoint ();
 
 	public:
 
@@ -50,13 +50,13 @@ namespace ts
 
 		void Stretch ();
 		void Shrink ();
+
+		sf::String Report () const;
 	};
 
 	class CArcLaneSection : public CLaneSection, public thor::ConcaveShape
 	{
 	private:
-		sf::Vector2f startPoint, endPoint;
-
 		float mWidth { carH };
 		float mRadius;
 		float mStartNormal;
@@ -78,5 +78,9 @@ namespace ts
 
 		void Stretch ();
 		void Shrink ();
+		void Enlarge ();
+		void Lessen ();
+
+		sf::String Report () const;
 	};
 }

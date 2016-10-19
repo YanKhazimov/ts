@@ -3,17 +3,16 @@
 namespace ts
 {
 	CStraightLaneSection::CStraightLaneSection (const sf::Vector2f& end0, const sf::Vector2f& end1)
-		: startPoint (end0), endPoint (end1)
+		: CLaneSection (end0, end1)
 	{
 		float length = sqrt ((end0.x - end1.x) * (end0.x - end1.x) + (end0.y - end1.y) * (end0.y - end1.y));
-		float normal = GetNormal (end0, end1);
-
+		
 		setOrigin (mWidth / 2, length / 2);
 		setSize ({ mWidth, length });
-		setRotation (normal);
+		setRotation (GetNormal (end0, end1));
 		setFillColor (sf::Color::Color (50, 50, 50));
 		setOutlineColor (sf::Color::White);
-		setOutlineThickness (2.f);
+		setOutlineThickness (1.f);
 
 		setPosition ({ (end0.x + end1.x) / 2, (end0.y + end1.y) / 2 });
 	}
@@ -43,13 +42,13 @@ namespace ts
 		if (dbgPts)
 		{
 			float angle = NormalizeAngle (sf::RectangleShape::getRotation() + 270.f);
-			dot.setPosition (startPoint);
+			dot.setPosition (mStartPoint);
 			dot.move ({ dotR * cosf (angle * M_PI / 180.f), dotR * sinf (angle * M_PI / 180.f) });
 			dot.setFillColor (sf::Color::Blue);
 			window.draw (dot);
 
 			angle = NormalizeAngle (sf::RectangleShape::getRotation () + 90.f);
-			dot.setPosition (endPoint);
+			dot.setPosition (mEndPoint);
 			dot.move ({ dotR * cosf (angle * M_PI / 180.f), dotR * sinf (angle * M_PI / 180.f) });
 			dot.setFillColor (sf::Color::Red);
 			window.draw (dot);
@@ -59,37 +58,47 @@ namespace ts
 	void CStraightLaneSection::Stretch ()
 	{
 		const sf::Vector2f& oldSize = RectangleShape::getSize ();
-		//RectangleShape::setSize ({ oldSize.x, oldSize.y + enlargeDelta });
+		RectangleShape::setSize ({ oldSize.x, oldSize.y + enlargeDelta });
 
-		//RectangleShape::setRotation (RectangleShape::getRotation () + 1.f);
-
-		float endDx = enlargeDelta * cosf ((sf::RectangleShape::getRotation () + 270.f) * M_PI / 180.f);
-		float endDy = enlargeDelta * sinf ((sf::RectangleShape::getRotation () + 90.f) * M_PI / 180.f);
-
-		//endPoint.x += endDx;
-		//endPoint.y += endDy;
+		float dx = enlargeDelta * cosf ((sf::RectangleShape::getRotation () + 270.f) * M_PI / 180.f);
+		float dy = enlargeDelta * sinf ((sf::RectangleShape::getRotation () + 270.f) * M_PI / 180.f);
 
 		const sf::Vector2f& oldPosition = RectangleShape::getPosition ();
-		RectangleShape::setPosition ({ oldPosition.x + endDx / 2, oldPosition.y + endDy / 2 });
+		RectangleShape::setPosition ({ oldPosition.x + dx, oldPosition.y + dy });
 		
-		const sf::Vector2f& oldOrigin = RectangleShape::getOrigin ();
-		RectangleShape::setOrigin ({ oldOrigin.x + fabs (endDx) / 2, oldOrigin.y + fabs (endDy) / 2 });
-
-		RectangleShape::move (endDx / 2, endDy / 2);
-		//RectangleShape::scale (1.f, (oldSize.y + enlargeDelta) / oldSize.y);
-
-		//UpdateEndPoint ();
+		mEndPoint.x += dx;
+		mEndPoint.y += dy;
 	}
 
 	void CStraightLaneSection::Shrink ()
 	{
+		const sf::Vector2f& oldSize = RectangleShape::getSize ();
+		if (oldSize.x >= oldSize.y)
+		{
+			return;
+		}
 
+		float limitedDelta = fmin (enlargeDelta, oldSize.y - oldSize.x);
+		RectangleShape::setSize ({ oldSize.x, oldSize.y - limitedDelta });
+
+		float dx = limitedDelta * cosf ((sf::RectangleShape::getRotation () + 90.f) * M_PI / 180.f);
+		float dy = limitedDelta * sinf ((sf::RectangleShape::getRotation () + 90.f) * M_PI / 180.f);
+
+		const sf::Vector2f& oldPosition = RectangleShape::getPosition ();
+		RectangleShape::setPosition ({ oldPosition.x + dx, oldPosition.y + dy });
+
+		mEndPoint.x += dx;
+		mEndPoint.y += dy;
 	}
 
-	void CStraightLaneSection::UpdateEndPoint ()
+	sf::String CStraightLaneSection::Report () const
 	{
-		endPoint.x += enlargeDelta * cosf ((RectangleShape::getRotation () + 180.f) * M_PI / 180.f);
-		endPoint.y += enlargeDelta * sinf ((RectangleShape::getRotation () + 270.f) * M_PI / 180.f);
+		std::stringstream sstream;
+		sstream << "(" << getOrigin ().x << ","
+			<< getOrigin ().y << ")->("
+			<< getPosition ().x << ","
+			<< getPosition ().y << ")";
+		return sstream.str ();
 	}
 
 	void CArcLaneSection::SetConcavePoints (const unsigned& pointCount)
@@ -147,7 +156,7 @@ namespace ts
 		thor::ConcaveShape::setPosition (center);
 		thor::ConcaveShape::setOrigin (center);
 
-		startPoint = end0;
+		mStartPoint = end0;
 		
 		if (mNegativeAngle)
 		{
@@ -160,7 +169,7 @@ namespace ts
 			mEndNormal = normal + nAngle;
 		}
 
-		endPoint = { center.x + mRadius * cosf ((normal + nAngle) * M_PI / 180.f),
+		mEndPoint = { center.x + mRadius * cosf ((normal + nAngle) * M_PI / 180.f),
 			center.y + mRadius * sinf ((normal + nAngle) * M_PI / 180.f) };
 
 		unsigned pointCount = CalculatePointCount ();
@@ -170,7 +179,7 @@ namespace ts
 
 		thor::ConcaveShape::setFillColor (sf::Color::Color (50, 50, 50));
 		thor::ConcaveShape::setOutlineColor (sf::Color::White);
-		thor::ConcaveShape::setOutlineThickness (2.f);
+		thor::ConcaveShape::setOutlineThickness (1.f);
 	}
 
 	CArcLaneSection::CArcLaneSection (const sf::Vector2f& center, const float& radius, const sf::Vector2f& normals)
@@ -187,7 +196,7 @@ namespace ts
 
 		thor::ConcaveShape::setFillColor (sf::Color::Color (50, 50, 50));
 		thor::ConcaveShape::setOutlineColor (sf::Color::White);
-		thor::ConcaveShape::setOutlineThickness (2.f);
+		thor::ConcaveShape::setOutlineThickness (1.f);
 	}
 
 	void CArcLaneSection::Draw (sf::RenderWindow& window, bool dbgPts)
@@ -200,15 +209,17 @@ namespace ts
 		if (!dbgPts) return;
 
 		// ends
+		float coeff = mNegativeAngle ? -1.f : 1.f;
+
 		float angle = NormalizeAngle (mStartNormal + 90.f);
-		dot.setPosition (startPoint);
-		dot.move ({ dotR * cosf (angle * M_PI / 180.f), dotR * sinf (angle * M_PI / 180.f) });
+		dot.setPosition (mStartPoint);
+		dot.move ({ dotR * cosf (angle * M_PI / 180.f), coeff * dotR * sinf (angle * M_PI / 180.f) });
 		dot.setFillColor (sf::Color::Blue);
 		window.draw (dot);
 
-		angle = NormalizeAngle (mEndNormal + 270);
-		dot.setPosition (endPoint);
-		dot.move ({ dotR * cosf (angle * M_PI / 180.f), dotR * sinf (angle * M_PI / 180.f) });
+		angle = NormalizeAngle (mEndNormal + 270.f);
+		dot.setPosition (mEndPoint);
+		dot.move ({ dotR * cosf (angle * M_PI / 180.f), coeff * dotR * sinf (angle * M_PI / 180.f) });
 		dot.setFillColor (sf::Color::Red);
 		window.draw (dot);
 
@@ -236,18 +247,23 @@ namespace ts
 
 	void CArcLaneSection::Stretch ()
 	{
+		if (enlargeDelta >= NormalizeAngle (mStartNormal - mEndNormal))
+		{
+			return;
+		}
+
 		const sf::Vector2f& center = thor::ConcaveShape::getPosition ();
 
 		if (mNegativeAngle)
 		{
-			mStartNormal -= 3.f;
-			endPoint = { center.x + mRadius * cosf (mStartNormal * M_PI / 180.f),
+			mStartNormal -= enlargeDelta;
+			mEndPoint = { center.x + mRadius * cosf (mStartNormal * M_PI / 180.f),
 				center.y + mRadius * sinf (mStartNormal * M_PI / 180.f) };
 		}
 		else
 		{
-			mEndNormal += 3.f;
-			endPoint = { center.x + mRadius * cosf (mEndNormal * M_PI / 180.f),
+			mEndNormal += enlargeDelta;
+			mEndPoint = { center.x + mRadius * cosf (mEndNormal * M_PI / 180.f),
 				center.y + mRadius * sinf (mEndNormal * M_PI / 180.f) };
 		}
 
@@ -258,24 +274,101 @@ namespace ts
 
 	void CArcLaneSection::Shrink ()
 	{
-		const sf::Vector2f& center = thor::ConcaveShape::getPosition ();
+		if (enlargeDelta >= NormalizeAngle (mEndNormal - mStartNormal))
+		{
+			return;
+		}
 
+		const sf::Vector2f& center = thor::ConcaveShape::getPosition ();
+		
 		if (mNegativeAngle)
 		{
-			mStartNormal += 3.f;
-			endPoint = { center.x + mRadius * cosf (mStartNormal * M_PI / 180.f),
+			mStartNormal += enlargeDelta;
+			mEndPoint = { center.x + mRadius * cosf (mStartNormal * M_PI / 180.f),
 				center.y + mRadius * sinf (mStartNormal * M_PI / 180.f) };
 		}
 		else
 		{
-			mEndNormal -= 3.f;
-			endPoint = { center.x + mRadius * cosf (mEndNormal * M_PI / 180.f),
+			mEndNormal -= enlargeDelta;
+			mEndPoint = { center.x + mRadius * cosf (mEndNormal * M_PI / 180.f),
 				center.y + mRadius * sinf (mEndNormal * M_PI / 180.f) };
 		}
 
 		unsigned pointCount = CalculatePointCount ();
 		thor::ConcaveShape::setPointCount (pointCount);
 		SetConcavePoints (thor::ConcaveShape::getPointCount ());
+	}
+
+	void CArcLaneSection::Enlarge ()
+	{
+		mRadius += enlargeDelta;
+		
+		sf::Vector2f center;
+
+		if (mNegativeAngle)
+		{
+			center = { mStartPoint.x - mRadius * cosf (mEndNormal * M_PI / 180.f),
+				mStartPoint.y - mRadius * sinf (mEndNormal * M_PI / 180.f) };
+
+			mEndPoint = { center.x + mRadius * cosf (mStartNormal * M_PI / 180.f),
+				center.y + mRadius * sinf (mStartNormal * M_PI / 180.f) };
+		}
+		else
+		{
+			center = { mStartPoint.x - mRadius * cosf (mStartNormal * M_PI / 180.f),
+				mStartPoint.y - mRadius * sinf (mStartNormal * M_PI / 180.f) };
+
+			mEndPoint = { center.x + mRadius * cosf (mEndNormal * M_PI / 180.f),
+				center.y + mRadius * sinf (mEndNormal * M_PI / 180.f) };
+		}
+
+		thor::ConcaveShape::setPosition (center);
+		thor::ConcaveShape::setOrigin (center);
+
+		unsigned pointCount = CalculatePointCount ();
+		thor::ConcaveShape::setPointCount (pointCount);
+		SetConcavePoints (thor::ConcaveShape::getPointCount ());
+	}
+
+	void CArcLaneSection::Lessen ()
+	{
+		if (mRadius <= mWidth)
+		{
+			return;
+		}
+
+		mRadius = fmax (mWidth, mRadius - enlargeDelta);
+
+		sf::Vector2f center;
+
+		if (mNegativeAngle)
+		{
+			center = { mStartPoint.x - mRadius * cosf (mEndNormal * M_PI / 180.f),
+				mStartPoint.y - mRadius * sinf (mEndNormal * M_PI / 180.f) };
+
+			mEndPoint = { center.x + mRadius * cosf (mStartNormal * M_PI / 180.f),
+				center.y + mRadius * sinf (mStartNormal * M_PI / 180.f) };
+		}
+		else
+		{
+			center = { mStartPoint.x - mRadius * cosf (mStartNormal * M_PI / 180.f),
+				mStartPoint.y - mRadius * sinf (mStartNormal * M_PI / 180.f) };
+
+			mEndPoint = { center.x + mRadius * cosf (mEndNormal * M_PI / 180.f),
+				center.y + mRadius * sinf (mEndNormal * M_PI / 180.f) };
+		}
+
+		thor::ConcaveShape::setPosition (center);
+		thor::ConcaveShape::setOrigin (center);
+
+		unsigned pointCount = CalculatePointCount ();
+		thor::ConcaveShape::setPointCount (pointCount);
+		SetConcavePoints (thor::ConcaveShape::getPointCount ());
+	}
+
+	sf::String CArcLaneSection::Report () const
+	{
+		return "";
 	}
 
 }

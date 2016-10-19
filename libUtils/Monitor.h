@@ -10,7 +10,7 @@ namespace ts
 	class IMonitorableObject
 	{
 	protected:
-		int id;
+		int id { 0 };
 	public:
 		virtual int GetId () { return id; }
 		virtual sf::String Report () const = 0;
