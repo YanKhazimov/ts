@@ -61,13 +61,14 @@ namespace ts
 		float mRadius;
 		float mStartNormal;
 		float mEndNormal;
-
 		bool mNegativeAngle;
 
 		void SetConcavePoints (const unsigned& pointCount);
 
 		bool EnsureIntegrity ();
 		unsigned CalculatePointCount ();
+
+		CArcLaneSection& operator = (const CArcLaneSection& other);
 
 	public:
 
@@ -80,6 +81,7 @@ namespace ts
 		void Shrink ();
 		void Enlarge ();
 		void Lessen ();
+		void Flip ();
 
 		sf::String Report () const;
 	};

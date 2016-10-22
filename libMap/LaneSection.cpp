@@ -41,6 +41,7 @@ namespace ts
 
 		if (dbgPts)
 		{
+			// end point markers
 			float angle = NormalizeAngle (sf::RectangleShape::getRotation() + 270.f);
 			dot.setPosition (mStartPoint);
 			dot.move ({ dotR * cosf (angle * M_PI / 180.f), dotR * sinf (angle * M_PI / 180.f) });
@@ -147,17 +148,37 @@ namespace ts
 		return (pointCount + 1) / 2 * 2; // make even
 	}
 
+	CArcLaneSection& CArcLaneSection::operator= (const CArcLaneSection& other)
+	{
+		mRadius = other.mRadius;
+		mStartNormal = other.mStartNormal;
+		mEndNormal = other.mEndNormal;
+		mNegativeAngle = other.mNegativeAngle;
+
+		mStartPoint = other.mStartPoint;
+		mEndPoint = other.mEndPoint;
+
+		thor::ConcaveShape::setPosition (other.getPosition ());
+		thor::ConcaveShape::setOrigin (other.getOrigin ());
+
+		thor::ConcaveShape::setPointCount (CalculatePointCount ());
+		SetConcavePoints (thor::ConcaveShape::getPointCount ());
+
+		return *this;
+	}
+
 	CArcLaneSection::CArcLaneSection (const sf::Vector2f& end0, const float& normal, const float& angle, const float& radius)
 		: mRadius (fmax (radius, mWidth / 2)), mNegativeAngle (angle < 0.f)
 	{
 		float nAngle = NormalizeAbsAngle (angle);
 
-		sf::Vector2f center { end0.x - mRadius * cosf (normal * M_PI / 180.f), end0.y - mRadius * sinf (normal * M_PI / 180.f) };
+		mStartPoint = end0;
+
+		sf::Vector2f center { end0.x - mRadius * cosf (normal * M_PI / 180.f),
+			end0.y - mRadius * sinf (normal * M_PI / 180.f) };
 		thor::ConcaveShape::setPosition (center);
 		thor::ConcaveShape::setOrigin (center);
 
-		mStartPoint = end0;
-		
 		if (mNegativeAngle)
 		{
 			mStartNormal = normal + nAngle;
@@ -172,9 +193,7 @@ namespace ts
 		mEndPoint = { center.x + mRadius * cosf ((normal + nAngle) * M_PI / 180.f),
 			center.y + mRadius * sinf ((normal + nAngle) * M_PI / 180.f) };
 
-		unsigned pointCount = CalculatePointCount ();
-		thor::ConcaveShape::setPointCount (pointCount);
-
+		thor::ConcaveShape::setPointCount (CalculatePointCount ());
 		SetConcavePoints (thor::ConcaveShape::getPointCount ());
 
 		thor::ConcaveShape::setFillColor (sf::Color::Color (50, 50, 50));
@@ -189,9 +208,7 @@ namespace ts
 		thor::ConcaveShape::setPosition (center);
 		thor::ConcaveShape::setOrigin (center);
 
-		unsigned pointCount = CalculatePointCount ();
-		thor::ConcaveShape::setPointCount (pointCount);
-
+		thor::ConcaveShape::setPointCount (CalculatePointCount ());
 		SetConcavePoints (thor::ConcaveShape::getPointCount ());
 
 		thor::ConcaveShape::setFillColor (sf::Color::Color (50, 50, 50));
@@ -208,18 +225,23 @@ namespace ts
 
 		if (!dbgPts) return;
 
-		// ends
-		float coeff = mNegativeAngle ? -1.f : 1.f;
-
-		float angle = NormalizeAngle (mStartNormal + 90.f);
-		dot.setPosition (mStartPoint);
-		dot.move ({ dotR * cosf (angle * M_PI / 180.f), coeff * dotR * sinf (angle * M_PI / 180.f) });
+		// end point markers
+		float angleOffset = dotR * 64.f / mRadius; // 64.f makes the dot look attached to the edge
+		float startPointNormal = mStartNormal + angleOffset;
+		float endPointNormal = mEndNormal - angleOffset;
+		if (mNegativeAngle)
+		{
+			std::swap (startPointNormal, endPointNormal);
+		}
+		const sf::Vector2f& center = thor::ConcaveShape::getPosition ();
+		
+		dot.setPosition (center.x + mRadius * cosf (startPointNormal * M_PI / 180.f),
+			center.y + mRadius * sinf (startPointNormal * M_PI / 180.f));
 		dot.setFillColor (sf::Color::Blue);
 		window.draw (dot);
 
-		angle = NormalizeAngle (mEndNormal + 270.f);
-		dot.setPosition (mEndPoint);
-		dot.move ({ dotR * cosf (angle * M_PI / 180.f), coeff * dotR * sinf (angle * M_PI / 180.f) });
+		dot.setPosition (center.x + mRadius * cosf (endPointNormal * M_PI / 180.f),
+			center.y + mRadius * sinf (endPointNormal * M_PI / 180.f));
 		dot.setFillColor (sf::Color::Red);
 		window.draw (dot);
 
@@ -364,6 +386,14 @@ namespace ts
 		unsigned pointCount = CalculatePointCount ();
 		thor::ConcaveShape::setPointCount (pointCount);
 		SetConcavePoints (thor::ConcaveShape::getPointCount ());
+	}
+
+	void CArcLaneSection::Flip ()
+	{
+		*this = CArcLaneSection (mStartPoint,
+			NormalizeAbsAngle (mNegativeAngle ? (mEndNormal + 180.f) : (mStartNormal + 180.f)),
+			mNegativeAngle ? (mEndNormal - mStartNormal) : (mStartNormal - mEndNormal),
+			mRadius);
 	}
 
 	sf::String CArcLaneSection::Report () const

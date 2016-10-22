@@ -38,7 +38,7 @@ int main ()
 	(new ts::CStraightLaneSection ({ 700.f, 700.f }, { 600.f, 600.f }));
 	std::shared_ptr<ts::CStraightLaneSection> section4
 	(new ts::CStraightLaneSection ({ 200.f, 200.f }, { 300.f, 350.f }));
-	ts::CArcLaneSection arc ({ 1000.f, 500.f }, 180.f, -10.f, 100.f);
+	ts::CArcLaneSection arc ({ 1000.f, 500.f }, 180.f, -135.f, 100.f);
 
 	ts::PCar car1 (new ts::CCar (carTexture1, sf::Color::Green, 100.f, 100.f,
 		std::shared_ptr<ts::CCarPhysics> (new ts::CCarLinearPhysics (window))));
@@ -64,6 +64,11 @@ int main ()
 	{
 		windowCycles->RegisterTick ();
 
+		if (!window.hasFocus ())
+		{
+			continue;
+		}
+
 		sf::Event event;
 		while (window.pollEvent (event))
 		{
@@ -73,18 +78,6 @@ int main ()
 			if (ts::CMapViewer::IsViewEvent (event.type))
 			{
 				viewer.ProcessViewEvent (event);
-			}
-
-			if (event.type == sf::Event::KeyReleased)
-			{
-				if (event.key.code == sf::Keyboard::Add)
-				{
-
-				}
-				else if (event.key.code == sf::Keyboard::Subtract)
-				{
-
-				}
 			}
 		}
 
@@ -134,6 +127,15 @@ int main ()
 			}
 		}
 
+		if (sf::Keyboard::isKeyPressed (sf::Keyboard::Tab))
+		{
+			arc.Flip ();
+			if (cArc)
+			{
+				cArc->Flip ();
+			}
+		}
+
 		if (sf::Keyboard::isKeyPressed (sf::Keyboard::Num2))
 		{
 			cArc = std::make_shared<ts::CArcLaneSection> (ts::CArcLaneSection ({ 400.f, 400.f }, -90.f, 180.f, ts::carH + 10.f));
@@ -164,7 +166,7 @@ int main ()
 
 		window.display ();
 
-		if (sf::Keyboard::isKeyPressed (sf::Keyboard::Escape) && window.hasFocus ())
+		if (sf::Keyboard::isKeyPressed (sf::Keyboard::Escape))
 		{
 			window.close ();
 		}
