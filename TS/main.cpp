@@ -6,6 +6,7 @@
 #include "libCar/Car.h"
 #include "libMap/MapViewer.h"
 #include "libMap/LaneSection.h"
+#include "libMap/MapConstructor.h"
 #include "libUtils/Monitor.h"
 
 int main ()
@@ -30,15 +31,8 @@ int main ()
 
 	ts::CMonitor monitor (window);
 
-	std::shared_ptr<ts::CStraightLaneSection> section1
-	(new ts::CStraightLaneSection ({ 400.f, 400.f }, { 300.f, 400.f }));
-	std::shared_ptr<ts::CStraightLaneSection> section2
-	(new ts::CStraightLaneSection ({ 900.f, 300.f }, { 900.f, 200.f }));
-	std::shared_ptr<ts::CStraightLaneSection> section3
-	(new ts::CStraightLaneSection ({ 700.f, 700.f }, { 600.f, 600.f }));
-	std::shared_ptr<ts::CStraightLaneSection> section4
-	(new ts::CStraightLaneSection ({ 200.f, 200.f }, { 300.f, 350.f }));
-	ts::CArcLaneSection arc ({ 1000.f, 500.f }, 180.f, -135.f, 100.f);
+	ts::CMapConstructor constructor (ts::SECTION_STRAIGHT, ts::PStraightLaneSection
+	(new ts::CStraightLaneSection ({ 500.f, 500.f } , { 400.f, 400.f })));
 
 	ts::PCar car1 (new ts::CCar (carTexture1, sf::Color::Green, 100.f, 100.f,
 		std::shared_ptr<ts::CCarPhysics> (new ts::CCarLinearPhysics (window))));
@@ -56,9 +50,7 @@ int main ()
 		wp = windowCycles;
 	//}
 
-	monitor << section1 << section2;// << car1 << car2 << car3;
-
-	std::shared_ptr<ts::CArcLaneSection> cArc;
+	//monitor << section1 << section2 << car1 << car2 << car3;
 
 	while (window.isOpen ())
 	{
@@ -79,80 +71,19 @@ int main ()
 			{
 				viewer.ProcessViewEvent (event);
 			}
+
+			if (ts::CMapConstructor::IsConstructionEvent (event))
+			{
+				constructor.ProcessConstructionEvent (event);
+			}
 		}
 
 		window.clear (sf::Color::White);
-		window.draw (background);
+		window.draw (background);		
 
-		if (sf::Keyboard::isKeyPressed (sf::Keyboard::Add))
-		{
-			section1->Stretch ();
-			section2->Stretch ();
-			section3->Stretch ();
-			section4->Stretch ();
-			arc.Stretch ();
-			if (cArc)
-			{
-				cArc->Stretch ();
-			}
-		}
-		if (sf::Keyboard::isKeyPressed (sf::Keyboard::Subtract))
-		{
-			section1->Shrink ();
-			section2->Shrink ();
-			section3->Shrink ();
-			section4->Shrink ();
-			arc.Shrink ();
-			if (cArc)
-			{
-				cArc->Shrink ();
-			}
-		}
+		constructor.DrawMap (window);
 
-		if (sf::Keyboard::isKeyPressed (sf::Keyboard::Multiply))
-		{
-			arc.Enlarge();
-			if (cArc)
-			{
-				cArc->Enlarge ();
-			}
-		}
-
-		if (sf::Keyboard::isKeyPressed (sf::Keyboard::Divide))
-		{
-			arc.Lessen ();
-			if (cArc)
-			{
-				cArc->Lessen ();
-			}
-		}
-
-		if (sf::Keyboard::isKeyPressed (sf::Keyboard::Tab))
-		{
-			arc.Flip ();
-			if (cArc)
-			{
-				cArc->Flip ();
-			}
-		}
-
-		if (sf::Keyboard::isKeyPressed (sf::Keyboard::Num2))
-		{
-			cArc = std::make_shared<ts::CArcLaneSection> (ts::CArcLaneSection ({ 400.f, 400.f }, -90.f, 180.f, ts::carH + 10.f));
-		}
-
-		section1->Draw (window, true);
-		section2->Draw (window, true);
-		section3->Draw (window, true);
-		section4->Draw (window, true);
-		arc.Draw (window, true);
-
-		if (cArc)
-		{			
-			cArc->Draw (window, true);
-		}
-
-		/*		
+				
 		car1->Update (window);
 		car1->Draw (window);
 
@@ -160,7 +91,7 @@ int main ()
 		car2->Draw (window);
 
 		car3->Update (window);
-		car3->Draw (window);*/
+		car3->Draw (window);
 
 		monitor.Update ();
 

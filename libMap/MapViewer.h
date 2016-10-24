@@ -8,9 +8,9 @@ namespace ts
 	class CMapViewer
 	{
 	public:
-		CMapViewer (sf::RenderWindow& renderWindow, const sf::Mouse::Button& button = sf::Mouse::Left);
+		CMapViewer (sf::RenderWindow& renderWindow, const sf::Mouse::Button& button = sf::Mouse::Right);
 		
-		void AdjustViewScale (const int& delta, sf::RenderWindow& window);
+		void AdjustViewScale (const int& delta);
 		
 		static bool IsViewEvent (const sf::Event::EventType& eventType);
 		void ProcessViewEvent (const sf::Event& event);

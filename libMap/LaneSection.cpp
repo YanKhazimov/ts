@@ -14,7 +14,21 @@ namespace ts
 		setOutlineColor (sf::Color::White);
 		setOutlineThickness (1.f);
 
-		setPosition ({ (end0.x + end1.x) / 2, (end0.y + end1.y) / 2 });
+		setPosition ({ (mStartPoint.x + mEndPoint.x) / 2, (mStartPoint.y + mEndPoint.y) / 2 });
+	}
+
+	CStraightLaneSection::CStraightLaneSection (const sf::Vector2f& end0, const float& normal, const float& length)
+		: CLaneSection (end0, { end0.x + length * cosf ((normal - 90.f) * M_PI / 180.f),
+			end0.y + length * sinf ((normal - 90.f) * M_PI / 180.f) })
+	{
+		setOrigin (mWidth / 2, length / 2);
+		setSize ({ mWidth, length });
+		setRotation (normal);
+		setFillColor (sf::Color::Color (50, 50, 50));
+		setOutlineColor (sf::Color::White);
+		setOutlineThickness (1.f);
+
+		setPosition ({ (mStartPoint.x + mEndPoint.x) / 2, (mStartPoint.y + mEndPoint.y) / 2 });
 	}
 
 	float CStraightLaneSection::GetNormal (const sf::Vector2f& end0, const sf::Vector2f& end1)
@@ -35,8 +49,9 @@ namespace ts
 		return (angle >= 270.f) ? (angle - 270.f) : (angle + 90.f);
 	}
 
-	void CStraightLaneSection::Draw (sf::RenderWindow& window, bool dbgPts)
+	void CStraightLaneSection::Draw (sf::RenderWindow& window, const sf::Color& border, bool dbgPts)
 	{
+		setOutlineColor (border);
 		window.draw (*this);
 
 		if (dbgPts)
@@ -92,11 +107,33 @@ namespace ts
 		mEndPoint.y += dy;
 	}
 
+	void CStraightLaneSection::Enlarge ()
+	{
+	}
+
+	void CStraightLaneSection::Lessen ()
+	{
+	}
+
+	void CStraightLaneSection::Flip ()
+	{
+	}
+
+	const float& CStraightLaneSection::GetStartNormal ()
+	{
+		return GetNormal (mStartPoint, mEndPoint);
+	}
+
+	const float& CStraightLaneSection::GetEndNormal ()
+	{
+		return GetNormal (mStartPoint, mEndPoint);
+	}
+
 	sf::String CStraightLaneSection::Report () const
 	{
 		std::stringstream sstream;
-		sstream << "(" << getOrigin ().x << ","
-			<< getOrigin ().y << ")->("
+		sstream << "o=(" << getOrigin ().x << ","
+			<< getOrigin ().y << ");p=("
 			<< getPosition ().x << ","
 			<< getPosition ().y << ")";
 		return sstream.str ();
@@ -216,11 +253,12 @@ namespace ts
 		thor::ConcaveShape::setOutlineThickness (1.f);
 	}
 
-	void CArcLaneSection::Draw (sf::RenderWindow& window, bool dbgPts)
+	void CArcLaneSection::Draw (sf::RenderWindow& window, const sf::Color& border, bool dbgPts)
 	{
 		if (!EnsureIntegrity ())
 			return;
 
+		setOutlineColor (border);
 		window.draw (*this);
 
 		if (!dbgPts) return;
@@ -396,9 +434,28 @@ namespace ts
 			mRadius);
 	}
 
+	const float& CArcLaneSection::GetStartNormal ()
+	{
+		return mNegativeAngle ? mEndNormal : mStartNormal;
+	}
+
+	const float& CArcLaneSection::GetEndNormal ()
+	{
+		return mNegativeAngle ? mStartNormal : mEndNormal;
+	}
+
 	sf::String CArcLaneSection::Report () const
 	{
 		return "";
 	}
 
+	const sf::Vector2f& CLaneSection::GetStartPoint ()
+	{
+		return mStartPoint;
+	}
+
+	const sf::Vector2f& CLaneSection::GetEndPoint ()
+	{
+		return mEndPoint;
+	}
 }

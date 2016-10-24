@@ -13,6 +13,8 @@ namespace ts
 	class CLaneSection : public IMonitorableObject
 	{
 	protected:
+		float mWidth { carH };
+
 		sf::Vector2f mStartPoint, mEndPoint;
 
 		float dotR { 3.f };
@@ -31,33 +33,57 @@ namespace ts
 		}
 
 	public:
+		virtual const float& GetStartNormal () = 0;
+		virtual const float& GetEndNormal () = 0;
+		const sf::Vector2f& GetStartPoint ();
+		const sf::Vector2f& GetEndPoint ();
+
 		virtual void Stretch () = 0;
 		virtual void Shrink () = 0;
+		virtual void Enlarge () = 0;
+		virtual void Lessen () = 0;
+		virtual void Flip () = 0;
+
+		virtual void Draw (sf::RenderWindow& window, const sf::Color& border, bool dbgPts) = 0;
+	};
+	typedef std::shared_ptr<CLaneSection> PLaneSection;
+
+	enum ESectionType
+	{
+		SECTION_STRAIGHT = 0,
+		SECTION_ARC,
+		SECTION_COUNT
 	};
 
 	class CStraightLaneSection : public CLaneSection, public sf::RectangleShape
 	{
 	private:
-		float mWidth { carH };
 		
 		static float GetNormal (const sf::Vector2f& end0, const sf::Vector2f& end1);
 
 	public:
 
 		CStraightLaneSection (const sf::Vector2f& end0, const sf::Vector2f& end1);
+		CStraightLaneSection (const sf::Vector2f& end0, const float& normal, const float& length);
 		
-		void Draw (sf::RenderWindow& window, bool dbgPts = false);
+		void Draw (sf::RenderWindow& window, const sf::Color& border = sf::Color::White, bool dbgPts = false);
 
 		void Stretch ();
 		void Shrink ();
+		void Enlarge ();
+		void Lessen ();
+		void Flip ();
+
+		const float& GetStartNormal ();
+		const float& GetEndNormal ();
 
 		sf::String Report () const;
 	};
+	typedef std::shared_ptr<CStraightLaneSection> PStraightLaneSection;
 
 	class CArcLaneSection : public CLaneSection, public thor::ConcaveShape
 	{
 	private:
-		float mWidth { carH };
 		float mRadius;
 		float mStartNormal;
 		float mEndNormal;
@@ -75,7 +101,7 @@ namespace ts
 		CArcLaneSection (const sf::Vector2f& center, const float& radius, const sf::Vector2f& normals);
 		CArcLaneSection (const sf::Vector2f& end0, const float& normal, const float& angle, const float& radius);
 
-		void Draw (sf::RenderWindow& window, bool dbgPts = false);
+		void Draw (sf::RenderWindow& window, const sf::Color& border = sf::Color::White, bool dbgPts = false);
 
 		void Stretch ();
 		void Shrink ();
@@ -83,6 +109,10 @@ namespace ts
 		void Lessen ();
 		void Flip ();
 
+		const float& GetStartNormal ();
+		const float& GetEndNormal ();
+
 		sf::String Report () const;
 	};
+	typedef std::shared_ptr<CArcLaneSection> PArcLaneSection;
 }

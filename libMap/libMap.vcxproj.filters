@@ -24,12 +24,18 @@
     <ClCompile Include="LaneSection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MapConstructor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MapViewer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LaneSection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MapConstructor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -7,7 +7,7 @@ namespace ts
 	{
 	}
 	
-	void CMapViewer::AdjustViewScale (const int& delta, sf::RenderWindow& window)
+	void CMapViewer::AdjustViewScale (const int& delta)
 	{
 		// delta in [-7;7]	
 		float zoomFactor = 1.f + 0.1f * delta;
@@ -50,7 +50,7 @@ namespace ts
 		{
 		case sf::Event::MouseWheelScrolled:
 		{
-			AdjustViewScale (event.mouseWheelScroll.delta, window);
+			AdjustViewScale (event.mouseWheelScroll.delta);
 			break;
 		}
 		case sf::Event::MouseButtonPressed:
